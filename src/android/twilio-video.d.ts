@@ -1,60 +1,47 @@
 import { Observable } from 'tns-core-modules/data/observable';
-import { VideoActivityBase } from '../twilio-common';
-export declare class VideoActivity implements VideoActivityBase {
-    previousAudioMode: any;
-    localVideoView: any;
-    remoteVideoView: any;
-    localVideoTrack: any;
-    localAudioTrack: any;
-    cameraCapturer: any;
-    cameraCapturerCompat: any;
-    accessToken: string;
-    TWILIO_ACCESS_TOKEN: string;
-    room: any;
+// import { VideoActivityBase } from '../twilio-common';
+import { RemoteVideo } from './remoteVideo';
+import { LocalVideo } from './localVideo';
+import { LocalVideoTrack, LocalAudioTrack, CameraCapturer, Room, LocalParticipant, AudioManager, RemoteParticipant } from './twilio-classes';
+
+declare const com, android;
+
+export declare class VideoActivityBase {
+
+    private previousAudioMode: number;
+	private event;
+
+	localVideoView: LocalVideo;
+    remoteVideoViews: RemoteVideo[];
+	localVideoTrack: LocalVideoTrack;
+    localAudioTrack: LocalAudioTrack;
+	cameraCapturer: CameraCapturer;
+	TWILIO_ACCESS_TOKEN: string;
+	room: Room;
     previousMicrophoneMute: boolean;
-    localParticipant: any;
-    audioManager: any;
-    participant: any;
-    private _event;
-    private roomListenersObject;
-    private participantListenersObject;
-    constructor();
-    readonly event: Observable;
-    setListeners(listeners: {
-        onConnectFailure: boolean;
-        onRecordingStarted: boolean;
-        onRecordingStopped: boolean;
-        onAudioTrackPublished: boolean;
-        onAudioTrackUnpublished: boolean;
-        onVideoTrackPublished: boolean;
-        onVideoTrackUnpublished: boolean;
-        onAudioTrackSubscribed: boolean;
-        onAudioTrackUnsubscribed: boolean;
-        onVideoTrackSubscribed: boolean;
-        onVideoTrackUnsubscribed: boolean;
-        onVideoTrackDisabled: boolean;
-        onVideoTrackEnabled: boolean;
-        onAudioTrackDisabled: boolean;
-        onAudioTrackEnabled: boolean;
-    }): void;
-    connect_to_room(roomName: string, options: {
+	localParticipant: LocalParticipant;
+	audioManager: AudioManager;
+    // readonly event: Observable;
+    connectToRoom(roomName: string, options: {
         video: boolean;
         audio: boolean;
     }): void;
-    start_preview(): any;
-    private addRemoteParticipant;
+	toggleSpeakerPhone(bool: boolean): void;
+	isSpeakerPhoneOn(): boolean;
+	addRemoteParticipant(remoteParticipant: RemoteParticipant): void;
+    startPreview(): void;
     onError(reason: string): void;
-    removeParticipantVideo(videoTrack: any): void;
-    removeRemoteParticipant(remoteParticipant: any): void;
-    addRemoteParticipantVideo(videoTrack: any): void;
-    destroy_local_video(): void;
+	removeParticipantVideo(videoTrack: VideoTrack): void;
+    removeRemoteParticipant(remoteParticipant: RemoteParticipant): void;
+	addRemoteParticipantVideo(videoTrack: VideoTrack): void;
+    destroyLocalVideo(): void;
     disconnect(): void;
-    cameraListener(): any;
-    roomListener(): any;
-    participantListener(): any;
-    configure_audio(enable: boolean): void;
+    cameraListener(): void;
+    roomListener(): void;
+    participantListener(): void;
+    configureAudio(enable: boolean): void;
     requestAudioFocus(): void;
-    set_access_token(token: string): void;
-    toggle_local_video(): void;
-    toggle_local_audio(): void;
+    setAccessToken(token: string): void;
+    toggleLocalVideo(): void;
+    toggleLocalAudio(): void;
 }

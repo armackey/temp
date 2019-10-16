@@ -1,76 +1,44 @@
-import { View } from 'tns-core-modules/ui/core/view';
-import * as utils from "tns-core-modules/utils/utils";
 import { Observable, fromObject } from 'tns-core-modules/data/observable';
-import { VideoActivityBase } from '../twilio-common';
-
-var app = require("application");
-var utilsModule = require("tns-core-modules/utils/utils");
+import { VideoActivityBase } from './twilio-video.d';
+import * as app from "tns-core-modules/application";
+import { LocalVideoTrack, LocalAudioTrack, CameraCapturer, Room, LocalParticipant, AudioManager, RemoteParticipant } from './twilio-classes';
+import { RemoteVideo } from './remoteVideo';
+import { LocalVideo } from './localVideo';
+import * as utils from "tns-core-modules/utils/utils";
 
 declare var com, android, java: any;
-
-const AudioManager = android.media.AudioManager;
-const AudioAttributes = android.media.AudioAttributes;
-const AudioFocusRequest = android.media.AudioFocusRequest;
-const LocalParticipant = com.twilio.video.LocalParticipant;
-const RoomState = com.twilio.video.RoomState;
-const Video = com.twilio.video.Video;
-const VideoRenderer = com.twilio.video.VideoRenderer;
-const TwilioException = com.twilio.video.TwilioException;
-const AudioTrack = com.twilio.video.AudioTrack;
-const CameraCapturer = com.twilio.video.CameraCapturer;
-// const CameraCapturerCameraSource = com.twilio.video.CameraCapturer.CameraSource;
-const ConnectOptions = com.twilio.video.ConnectOptions;
-const LocalAudioTrack = com.twilio.video.LocalAudioTrack;
-const LocalVideoTrack = com.twilio.video.LocalVideoTrack;
-// const VideoCapturer = com.twilio.video.VideoCapturer;
-const Participant = com.twilio.video.RemoteParticipant;
-const Room = com.twilio.video.Room;
-const VideoTrack = com.twilio.video.VideoTrack;
-
+const blah = com.twilio.video.AudioCodec;
 export class VideoActivity implements VideoActivityBase {
 
-    public previousAudioMode: any;
-    public localVideoView: any;
-    public remoteVideoView: any;
-    public localVideoTrack: any;
-    public localAudioTrack: any;
-    public cameraCapturer: any;
-    public cameraCapturerCompat: any;
-    public accessToken: string;
-    public TWILIO_ACCESS_TOKEN: string;
-    public room: any;
-    public previousMicrophoneMute: boolean;
-    public localParticipant: any;
-    public audioManager: any;
+    // public previousAudioMode: any;
+    // public localVideoView: any;
+    // public remoteVideoView: any;
+    // public localVideoTrack: any;
+    // public localAudioTrack: any;
+    // public cameraCapturer: any;
+    // public TWILIO_ACCESS_TOKEN: string;
+    // public room: any;
+    // public previousMicrophoneMute: boolean;
+    // public localParticipant: any;
+    // public audioManager: any;
     
-    public participant: any;
+    // public participant: any;
 
-	private _event: Observable;
-	private roomListenersObject: {
-		onConnected: boolean,
-		onConnectFailure: boolean,
-		onRecordingStarted: boolean,
-		onRecordingStopped: boolean,
-		onDisconnected: boolean,
-		onParticipantConnected: boolean,
-		onParticipantDisconnected: boolean,
-	};
+	// private _event: Observable;
 
-	private participantListenersObject: {
-		onAudioTrackPublished: boolean,
-		onAudioTrackUnpublished: boolean,
-		onVideoTrackPublished: boolean,
-		onVideoTrackUnpublished: boolean,
-		onAudioTrackSubscribed: boolean,
-		onAudioTrackUnsubscribed: boolean,
-		onVideoTrackSubscribed: boolean,
-		onVideoTrackUnsubscribed: boolean,
-		onVideoTrackDisabled: boolean,
-		onVideoTrackEnabled: boolean,
-		onAudioTrackDisabled: boolean,
-		onAudioTrackEnabled: boolean
-	};
+	private previousAudioMode: number;
+	private event;
 
+	localVideoView: LocalVideo;
+	remoteVideoViews: RemoteVideo[];
+	localVideoTrack: LocalVideoTrack;
+	localAudioTrack: LocalAudioTrack;
+	cameraCapturer: CameraCapturer;
+	TWILIO_ACCESS_TOKEN: string;
+	room: Room;
+	previousMicrophoneMute: boolean;
+	localParticipant: LocalParticipant;
+	audioManager: AudioManager;
 
     constructor() {
 
@@ -94,64 +62,43 @@ export class VideoActivity implements VideoActivityBase {
 
     }
 
-	/**
-	 * 
-	 * @param listeners 
-	 * ANDROID ONLY
-	 * onConnected, onDisconnected, onParticipantConnected, and onParticipantDisconnected are set by default
-	 */
-	public setListeners(listeners: {
-		onConnectFailure: boolean,
-		onRecordingStarted: boolean,
-		onRecordingStopped: boolean,
-		onAudioTrackPublished: boolean,
-		onAudioTrackUnpublished: boolean,
-		onVideoTrackPublished: boolean,
-		onVideoTrackUnpublished: boolean,
-		onAudioTrackSubscribed: boolean,
-		onAudioTrackUnsubscribed: boolean,
-		onVideoTrackSubscribed: boolean,
-		onVideoTrackUnsubscribed: boolean,
-		onVideoTrackDisabled: boolean,
-		onVideoTrackEnabled: boolean,
-		onAudioTrackDisabled: boolean,
-		onAudioTrackEnabled: boolean
-	}): void {
+	toggleSpeakerPhone(bool: boolean): void {
 
-		this.roomListenersObject = {
-			onConnected: true,
-			onConnectFailure: listeners.onConnectFailure,
-			onRecordingStarted: listeners.onRecordingStarted,
-			onRecordingStopped: listeners.onRecordingStopped,
-			onDisconnected: true,
-			onParticipantConnected: true,
-			onParticipantDisconnected: true
-		};
+		this.audioManager.setSpeakerphoneOn(!this.isSpeakerPhoneOn());
 
-		this.participantListenersObject = {
-			onAudioTrackPublished: listeners.onAudioTrackPublished,
-			onAudioTrackUnpublished: listeners.onAudioTrackUnpublished,
-			onVideoTrackPublished: listeners.onVideoTrackPublished,
-			onVideoTrackUnpublished: listeners.onVideoTrackUnpublished,
-			onAudioTrackSubscribed: listeners.onAudioTrackSubscribed,
-			onAudioTrackUnsubscribed: listeners.onAudioTrackUnsubscribed,
-			onVideoTrackSubscribed: listeners.onVideoTrackSubscribed,
-			onVideoTrackUnsubscribed: listeners.onVideoTrackUnsubscribed,
-			onVideoTrackDisabled: listeners.onVideoTrackDisabled,
-			onVideoTrackEnabled: listeners.onVideoTrackEnabled,
-			onAudioTrackDisabled: listeners.onAudioTrackDisabled,
-			onAudioTrackEnabled: listeners.onAudioTrackEnabled
-		};
+	}
 
-		let obj = {
+	isSpeakerPhoneOn(): boolean {
 
+		return this.audioManager.isSpeakerphoneOn();
+
+	}
+
+    /*
+     * Get the preferred audio codec from shared preferences
+     */
+	private getAudioCodecPreference(key: string, defaultValue: string): typeof blah {
+		final String audioCodecName = preferences.getString(key, defaultValue);
+
+		switch (audioCodecName) {
+			case IsacCodec.NAME:
+				return new IsacCodec();
+			case OpusCodec.NAME:
+				return new OpusCodec();
+			case PcmaCodec.NAME:
+				return new PcmaCodec();
+			case PcmuCodec.NAME:
+				return new PcmuCodec();
+			case G722Codec.NAME:
+				return new G722Codec();
+			default:
+				return new OpusCodec();
 		}
-
 	}
 
     public connect_to_room(roomName: string, options: { video: boolean, audio: boolean }) {
 
-        if (!this.accessToken) {
+        if (!this.TWILIO_ACCESS_TOKEN) {
 
             this.onError('Please provide a valid token to connect to a room');
 
@@ -161,7 +108,7 @@ export class VideoActivity implements VideoActivityBase {
 
 
 
-		let connectOptionsBuilder = new ConnectOptions.Builder(this.accessToken).roomName(roomName);
+		let connectOptionsBuilder = new ConnectOptions.Builder(this.TWILIO_ACCESS_TOKEN).roomName(roomName);
 
         if (options.audio) {
 
@@ -173,7 +120,8 @@ export class VideoActivity implements VideoActivityBase {
 
             this.configure_audio(true);
 
-            this.localAudioTrack = com.twilio.video.LocalAudioTrack.create(utilsModule.ad.getApplicationContext(), true, "mic");
+            this.localAudioTrack = com.twilio.video.LocalAudioTrack.create(utils.ad.getApplicationContext(), true, "mic");
+			
 
             /*
             * Add local audio track to connect options to share with participants.
@@ -218,7 +166,8 @@ export class VideoActivity implements VideoActivityBase {
         // room = Video.connect(this, connectOptionsBuilder.build(), roomListener());
         // setDisconnectAction();        
 		// com.twilio.video.connect
-        this.room = com.twilio.video.Video.connect(utilsModule.ad.getApplicationContext(), connectOptionsBuilder.build(), this.roomListener());
+        this.room = com.twilio.video.Video.connect(utils.ad.getApplicationContext(), connectOptionsBuilder.build(), this.roomListener());
+		
     }
 
     start_preview(): any {
@@ -228,12 +177,15 @@ export class VideoActivity implements VideoActivityBase {
             return;
 
         };
-        // this.cameraCapturer = new CameraCapturer(utilsModule.ad.getApplicationContext(), CameraCapturer.CameraSource.FRONT_CAMERA, this.cameraListener());
+        // this.cameraCapturer = new CameraCapturer(utils.ad.getApplicationContext(), CameraCapturer.CameraSource.FRONT_CAMERA, this.cameraListener());
+		
 
-        this.cameraCapturer = new CameraCapturer(utilsModule.ad.getApplicationContext(), CameraCapturer.CameraSource.FRONT_CAMERA, null);
+        this.cameraCapturer = new CameraCapturer(utils.ad.getApplicationContext(), CameraCapturer.CameraSource.FRONT_CAMERA, null);
+		
 
 
-        this.localVideoTrack = LocalVideoTrack.create(utilsModule.ad.getApplicationContext(), true, this.cameraCapturer, 'camera');
+        this.localVideoTrack = LocalVideoTrack.create(utils.ad.getApplicationContext(), true, this.cameraCapturer, 'camera');
+		
 
 
         this.localVideoTrack.addRenderer(this.localVideoView);
@@ -284,6 +236,11 @@ export class VideoActivity implements VideoActivityBase {
     }
 
     public removeRemoteParticipant(remoteParticipant) {
+
+		//TODO: 
+		// on array
+		// check identity of participant leaving
+		// then remove
 
         // if (!remoteParticipant.getIdentity().equals(remoteParticipantIdentity)) {
         //     return;
@@ -670,7 +627,7 @@ export class VideoActivity implements VideoActivityBase {
 
     public set_access_token(token: string) {
 
-        this.accessToken = token;
+        this.TWILIO_ACCESS_TOKEN = token;
 
     }
 

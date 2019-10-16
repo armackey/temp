@@ -1,20 +1,14 @@
 import { View } from 'tns-core-modules/ui/core/view';
 import * as utils from "tns-core-modules/utils/utils";
 
-// var app = require("application");
+declare var com;
 
-declare var com, android: any;
+const VideoView = com.twilio.video.VideoView;
 
-// const VideoView: any = com.twilio.video.VideoView;
-// const videoView = new VideoView(utils.ad.getApplicationContext());
-
-export class LocalVideo extends View {
-
-    localVideoView: any;
+export class LocalVideo extends VideoView {
 
     constructor() {
-        super();
-        this.localVideoView = new com.twilio.video.VideoView(utils.ad.getApplicationContext());
+        super(); 
     }
 
     get android(): any {
@@ -25,31 +19,15 @@ export class LocalVideo extends View {
 
     public createNativeView() {
 
-        // return new android.widget.LinearLayout(utils.ad.getApplicationContext());
-        return this.localVideoView;
+		return new com.twilio.video.VideoView(utils.ad.getApplicationContext());
 
     }
 
-
-    // public initNativeView(): void {
-
-    //     // this.nativeView.addView(this.localVideoView);
-
-    // }
 
     public disposeNativeView() {
 
         this.nativeView = null;
 
     }
-
-    // public removeVideoView() {
-
-    //     this.nativeView.removeView(this.localVideoView);
-
-    // }
-
-
-
 
 }

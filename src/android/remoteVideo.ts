@@ -1,18 +1,15 @@
 import { View } from 'tns-core-modules/ui/core/view';
 import * as utils from "tns-core-modules/utils/utils";
 
-declare var com, android: any;
-// const VideoView: any = com.twilio.video.VideoView;
-// const videoView = new VideoView(utils.ad.getApplicationContext());
+declare var com;
 
-export class RemoteVideo extends View {
+const VideoView = com.twilio.video.VideoView;
 
-    remoteVideoView: any;
+export class RemoteVideo extends VideoView {
 
     constructor() {
         super();
 
-        this.remoteVideoView = new com.twilio.video.VideoView(utils.ad.getApplicationContext());
     }
 
     get android(): any {
@@ -23,7 +20,7 @@ export class RemoteVideo extends View {
 
     public createNativeView() {
 
-        return this.remoteVideoView;
+		return new com.twilio.video.VideoView(utils.ad.getApplicationContext());
 
     }
 
